@@ -5,9 +5,9 @@ import {
   VideoCameraOutlined,
   BarChartOutlined,
   TeamOutlined,
-  LogoutOutlined
+  LogoutOutlined,
 } from "@ant-design/icons";
-import { Layout, Menu, Button, theme, Breadcrumb } from "antd";
+import { Layout, Menu, Button, theme, Breadcrumb, Typography } from "antd";
 import { Courses, Jobs } from "../index";
 import { useNavigate } from "react-router-dom";
 const { Header, Sider, Content } = Layout;
@@ -76,7 +76,8 @@ const Dashboard = () => {
                 height: 64,
               }}
             />
-              <Button
+              <span style={{fontWeight:"bold", fontSize:"18px"}}>Dashboard</span>
+            <Button
               type="text"
               icon={<LogoutOutlined />}
               onClick={() => navigate("/")}
@@ -91,13 +92,17 @@ const Dashboard = () => {
           {/* Content */}
           <Breadcrumb
             style={{
-              margin: '16px 16px 0 16px',
+              margin: "16px 16px 0 16px",
             }}
           >
             <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
-            {selectedMenuItem === "1"? 
-            <Breadcrumb.Item>Job</Breadcrumb.Item>:selectedMenuItem === "2"?
-            <Breadcrumb.Item>Course</Breadcrumb.Item>:<Breadcrumb.Item>Analytics</Breadcrumb.Item>}
+            {selectedMenuItem === "1" ? (
+              <Breadcrumb.Item>Job</Breadcrumb.Item>
+            ) : selectedMenuItem === "2" ? (
+              <Breadcrumb.Item>Course</Breadcrumb.Item>
+            ) : (
+              <Breadcrumb.Item>Analytics</Breadcrumb.Item>
+            )}
           </Breadcrumb>
           <Content
             style={{
@@ -106,7 +111,7 @@ const Dashboard = () => {
               minHeight: 280,
               height: 200,
               background: colorBgContainer,
-              overflowY: 'auto',
+              overflowY: "auto",
             }}
           >
             {selectedMenuItem === "1" && <Jobs />}
