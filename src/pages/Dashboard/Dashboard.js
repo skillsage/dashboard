@@ -7,7 +7,7 @@ import {
   TeamOutlined,
   LogoutOutlined
 } from "@ant-design/icons";
-import { Layout, Menu, Button, theme } from "antd";
+import { Layout, Menu, Button, theme, Breadcrumb } from "antd";
 import { Courses, Jobs } from "../index";
 import { useNavigate } from "react-router-dom";
 const { Header, Sider, Content } = Layout;
@@ -37,7 +37,7 @@ const Dashboard = () => {
             items={[
               {
                 key: "0",
-                label: "SS Dashboard",
+                label: "Dashboard",
                 disabled: true,
               },
               {
@@ -89,6 +89,16 @@ const Dashboard = () => {
             />
           </Header>
           {/* Content */}
+          <Breadcrumb
+            style={{
+              margin: '16px 16px 0 16px',
+            }}
+          >
+            <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+            {selectedMenuItem === "1"? 
+            <Breadcrumb.Item>Job</Breadcrumb.Item>:selectedMenuItem === "2"?
+            <Breadcrumb.Item>Course</Breadcrumb.Item>:<Breadcrumb.Item>Analytics</Breadcrumb.Item>}
+          </Breadcrumb>
           <Content
             style={{
               margin: "24px 16px",
