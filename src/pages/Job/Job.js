@@ -102,14 +102,18 @@ const Jobs = () => {
       setExpandedRows([...expandedRows, record.id]);
     }
   };
-  
 
   const fetchJobs = async () => {
-    const { success, result } = await getJobs();
+    try{
+      const { success, result } = await getJobs();
     if (success) {
       setJobs(result);
       setFilterData(result);
     }
+    }catch(errInfo){
+      openNotification("error", "Error", errInfo.message);
+    }
+    
   };
 
   useEffect(() => {
@@ -154,6 +158,7 @@ const Jobs = () => {
       }
     } catch (errInfo) {
       console.log("Validate Failed:", errInfo);
+      openNotification("error", "Error", errInfo.message);
     }
   };
 
@@ -164,6 +169,14 @@ const Jobs = () => {
   const handleCancel = () => {
     setIsModalVisible(false);
     form.resetFields();
+  };
+
+  const errorFlattener = (error) => {
+    let err = "";
+    error.errorFields.forEach((element) => {
+      err += `${element.errors}\n`;
+    });
+    return err;
   };
 
   const handleOk = () => {
@@ -183,36 +196,49 @@ const Jobs = () => {
           requirements: requirements,
           skills: skills,
         };
-        const { success } = await addJob(jobData);
-        if (success) {
-          setRefreshData(!refreshData);
-          form.resetFields();
-          setIsModalVisible(false);
-          openNotification(
-            "success",
-            "Job Added",
-            "The job has been successfully added."
-          );
-        } else {
-          openNotification("error", "Add Job Failed", "Unable to add the job");
+        try {
+          const { success } = await addJob(jobData);
+          if (success) {
+            setRefreshData(!refreshData);
+            form.resetFields();
+            setIsModalVisible(false);
+            openNotification(
+              "success",
+              "Job Added",
+              "The job has been successfully added."
+            );
+          } else {
+            openNotification(
+              "error",
+              "Add Job Failed",
+              "Unable to add the job"
+            );
+          }
+        } catch (errInfo) {
+          openNotification("error", "Error", errInfo.message);
         }
       })
       .catch((errorInfo) => {
         console.log("Validate Failed:", errorInfo);
+        openNotification("error", "Error", errorFlattener(errorInfo));
       });
   };
 
   const handleDelete = async (id) => {
-    const { success } = await removeJob(id);
-    if (success) {
-      setRefreshData(!refreshData);
-      openNotification(
-        "success",
-        "Job Deleted",
-        "The job has been successfully deleted."
-      );
-    } else {
-      openNotification("error", "Delete Failed", "Unable to delete the job");
+    try {
+      const { success } = await removeJob(id);
+      if (success) {
+        setRefreshData(!refreshData);
+        openNotification(
+          "success",
+          "Job Deleted",
+          "The job has been successfully deleted."
+        );
+      } else {
+        openNotification("error", "Delete Failed", "Unable to delete the job");
+      }
+    } catch (errInfo) {
+      openNotification("error", "Error", errInfo.message);
     }
   };
 
@@ -351,7 +377,7 @@ const Jobs = () => {
       </Form>
     ) : null;
   };
-  
+
   const onSearch = (value) => {
     const filteredData = jobs.filter((job) =>
       job.title.toLowerCase().includes(value.toLowerCase())
@@ -406,10 +432,10 @@ const Jobs = () => {
           rowClassName="editable-row"
           onChange={onChange}
           expandable={{
-            rowExpandable: (record) => record.title !== 'Not Expandable',
+            rowExpandable: (record) => record.title !== "Not Expandable",
             expandedRowRender,
             onExpand: handleExpand,
-          }}         
+          }}
           rowSelection={rowSelection}
         />
 
