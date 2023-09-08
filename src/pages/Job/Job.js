@@ -92,28 +92,30 @@ const Jobs = () => {
     setEditingKey(record.id);
   };
 
+  const clearForm = () => {
+    form.resetFields();
+  };
+
   const handleExpand = (expanded, record) => {
     if (!expanded) {
-      // If the row is being collapsed, update the expanded rows state
       const newExpandedRows = expandedRows.filter((key) => key !== record.id);
       setExpandedRows(newExpandedRows);
     } else {
-      // If the row is being expanded, add it to the expanded rows state
+      clearForm();
       setExpandedRows([...expandedRows, record.id]);
     }
   };
 
   const fetchJobs = async () => {
-    try{
+    try {
       const { success, result } = await getJobs();
-    if (success) {
-      setJobs(result);
-      setFilterData(result);
-    }
-    }catch(errInfo){
+      if (success) {
+        setJobs(result);
+        setFilterData(result);
+      }
+    } catch (errInfo) {
       openNotification("error", "Error", errInfo.message);
     }
-    
   };
 
   useEffect(() => {
@@ -197,7 +199,8 @@ const Jobs = () => {
           skills: skills,
         };
         try {
-          const { success } = await addJob(jobData);
+          const { result ,success } = await addJob(jobData);
+          console.log(result);
           if (success) {
             setRefreshData(!refreshData);
             form.resetFields();
@@ -215,7 +218,7 @@ const Jobs = () => {
             );
           }
         } catch (errInfo) {
-          openNotification("error", "Error", errInfo.message);
+          openNotification("error", "Error", errInfo.request.error);
         }
       })
       .catch((errorInfo) => {
@@ -259,6 +262,12 @@ const Jobs = () => {
       render: (text, record) => renderCell(text, record, "title"),
     },
     {
+      title: "Company",
+      dataIndex: "company",
+      width: "10%",
+      render: (text, record) => renderCell(text, record, "company"),
+    },
+    {
       title: "Location",
       dataIndex: "location",
       width: "10%",
@@ -276,12 +285,12 @@ const Jobs = () => {
       width: "10%",
       render: (text, record) => renderCell(text, record, "salary"),
     },
-    {
-      title: "Description",
-      dataIndex: "description",
-      width: "20%",
-      render: (text, record) => renderCell(text, record, "description"),
-    },
+    // {
+    //   title: "Description",
+    //   dataIndex: "description",
+    //   width: "20%",
+    //   render: (text, record) => renderCell(text, record, "description"),
+    // },
     {
       title: "Type",
       dataIndex: "type",
@@ -365,15 +374,40 @@ const Jobs = () => {
     return isThisRowExpanded ? (
       <Form form={form} initialValues={{ ...record }}>
         {/* Render additional form fields or details here */}
-        <Form.Item label="Requirements" name="requirements">
-          <Input.TextArea />
-        </Form.Item>
-        <Form.Item label="Skills" name="skills">
-          <Input.TextArea />
-        </Form.Item>
-        <Form.Item label="Image" name="image">
-          <Input />
-        </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label="Requirements" name="requirements">
+              <Input.TextArea />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="Skills" name="skills">
+              <Input.TextArea />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label="Image" name="image">
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="Description" name="description">
+              <Input.TextArea />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        {/* Add a section for viewing applicants */}
+        <h3>Applicants for {record.title}</h3>
+        {/* You can display a list of applicants here */}
+        {/* For example: */}
+        <ul>
+          <li>Applicant 1</li>
+          <li>Applicant 2</li>
+          {/* ... other applicants */}
+        </ul>
       </Form>
     ) : null;
   };
@@ -441,7 +475,7 @@ const Jobs = () => {
 
         <Modal
           title="Add Job"
-          visible={isModalVisible}
+          open={isModalVisible}
           onOk={handleOk}
           onCancel={handleCancel}
           form={form}
@@ -521,10 +555,30 @@ const Jobs = () => {
               </Form.Item>
             </Col>
           </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                label="Company"
+                name="company"
+                rules={[
+                  { required: true, message: "Please input the company!" },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Image" name="image">
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item
             label="Description"
             name="description"
-            rules={[{ required: true, message: "Please input the job title!" }]}
+            rules={[
+              { required: true, message: "Please input the job description!" },
+            ]}
           >
             <Input.TextArea />
           </Form.Item>
@@ -533,9 +587,6 @@ const Jobs = () => {
           </Form.Item>
           <Form.Item label="Skills" name="skills">
             <Input.TextArea />
-          </Form.Item>
-          <Form.Item label="Image" name="image">
-            <Input />
           </Form.Item>
         </Modal>
       </Form>

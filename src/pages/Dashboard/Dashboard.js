@@ -6,10 +6,12 @@ import {
   BarChartOutlined,
   TeamOutlined,
   LogoutOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu, Button, theme, Breadcrumb, Typography } from "antd";
 import { Courses, Jobs } from "../index";
 import { useNavigate } from "react-router-dom";
+import Application from "../Applications/Applications";
 const { Header, Sider, Content } = Layout;
 
 const Dashboard = () => {
@@ -47,11 +49,16 @@ const Dashboard = () => {
               },
               {
                 key: "2",
+                icon: <UserOutlined />,
+                label: "Applicants",
+              },
+              {
+                key: "3",
                 icon: <VideoCameraOutlined />,
                 label: "Course",
               },
               {
-                key: "3",
+                key: "4",
                 icon: <BarChartOutlined />,
                 label: "Analytics",
               },
@@ -76,7 +83,9 @@ const Dashboard = () => {
                 height: 64,
               }}
             />
-              <span style={{fontWeight:"bold", fontSize:"18px"}}>Dashboard</span>
+            <span style={{ fontWeight: "bold", fontSize: "18px" }}>
+              Dashboard
+            </span>
             <Button
               type="text"
               icon={<LogoutOutlined />}
@@ -98,8 +107,10 @@ const Dashboard = () => {
             <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
             {selectedMenuItem === "1" ? (
               <Breadcrumb.Item>Job</Breadcrumb.Item>
-            ) : selectedMenuItem === "2" ? (
+            ) : selectedMenuItem === "3" ? (
               <Breadcrumb.Item>Course</Breadcrumb.Item>
+            ) : selectedMenuItem === "2" ? (
+              <Breadcrumb.Item>Applicant</Breadcrumb.Item>
             ) : (
               <Breadcrumb.Item>Analytics</Breadcrumb.Item>
             )}
@@ -115,7 +126,8 @@ const Dashboard = () => {
             }}
           >
             {selectedMenuItem === "1" && <Jobs />}
-            {selectedMenuItem === "2" && <Courses />}
+            {selectedMenuItem === "2" && <Application/>}
+            {selectedMenuItem === "3" && <Courses />}
           </Content>
         </Layout>
       </Layout>
