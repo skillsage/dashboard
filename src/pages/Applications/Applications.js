@@ -13,7 +13,7 @@ import {
 } from "../../services/applications";
 
 const Application = () => {
-  const [applicants, setApplicants] = useState([]); // Replace with your array of applicants
+  const [applicants, setApplicants] = useState([]); 
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [refreshData, setRefreshData] = useState(false);
@@ -43,7 +43,7 @@ const Application = () => {
     const link = document.createElement("a");
     link.href = resumeUrl;
     link.target = "_blank";
-    link.download = "resume.pdf"; // Set the desired filename
+    link.download = "resume.pdf"; 
     link.click();
   };
   const columns = [
@@ -57,7 +57,8 @@ const Application = () => {
       title: "Email",
       dataIndex: "email",
       key: "email",
-    },{
+    },
+    {
       title: "Status",
       dataIndex: "status",
       key: "status",
@@ -83,8 +84,8 @@ const Application = () => {
           </Tag>
         );
       },
-    }
-,    
+      
+    },
     {
       title: "Skills",
       dataIndex: "skills",

@@ -1,8 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Form,
   Input,
-  InputNumber,
   Popconfirm,
   Table,
   Typography,
@@ -11,6 +10,10 @@ import {
   Modal,
   Row,
   Col,
+  notification,
+  InputNumber,
+  Tag,
+  Switch,
 } from "antd";
 import {
   PlusOutlined,
@@ -19,7 +22,111 @@ import {
   CheckOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
-import "./Course.css";
+import "./Course.css"; // Create a Course.css file for styling if needed
+import {
+  addCourse,
+  getCourses,
+  removeCourse,
+  updateCourse,
+  addSession,
+  addItem, // Add your service function for adding sessions here
+} from "../../services/course";
+
+const SessionForm = ({ visible, onCreate, onCancel, id }) => {
+  const [form] = Form.useForm();
+
+  return (
+    <Modal
+      open={visible}
+      title="Add Session"
+      okText="Add"
+      cancelText="Cancel"
+      onCancel={onCancel}
+      onOk={() => {
+        form
+          .validateFields()
+          .then((values) => {
+            onCreate(values, id);
+            form.resetFields();
+          })
+          .catch((errorInfo) => {
+            console.log("Validation failed:", errorInfo);
+          });
+      }}
+    >
+      <Form form={form} layout="vertical">
+        <Form.Item
+          name="name"
+          label="Session Name"
+          rules={[
+            {
+              required: true,
+              message: "Please enter the session name",
+            },
+          ]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item
+          name="video"
+          label="Video URL"
+          rules={[
+            {
+              required: true,
+              message: "Please enter the video URL",
+            },
+          ]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item name="time" label="Time">
+          <Input />
+        </Form.Item>
+        {/* You can add more form fields as needed */}
+      </Form>
+    </Modal>
+  );
+};
+
+const ItemForm = ({ visible, onCreate, onCancel, id }) => {
+  const [form] = Form.useForm();
+
+  return (
+    <Modal
+      open={visible}
+      title="Add Session"
+      okText="Add"
+      cancelText="Cancel"
+      onCancel={onCancel}
+      onOk={() => {
+        form
+          .validateFields()
+          .then((values) => {
+            onCreate(values, id);
+            form.resetFields();
+          })
+          .catch((errorInfo) => {
+            console.log("Validation failed:", errorInfo);
+          });
+      }}
+    >
+      <Form form={form} layout="vertical">
+        <Form.Item
+          name="name"
+          label="Session Name"
+          rules={[
+            {
+              required: true,
+              message: "Please enter the session name",
+            },
+          ]}
+        >
+          <Input />
+        </Form.Item>
+      </Form>
+    </Modal>
+  );
+};
 
 const EditableCell = ({
   editing,
@@ -27,15 +134,12 @@ const EditableCell = ({
   title,
   inputType,
   record,
-  index,
   children,
-  form,
+  ...restProps
 }) => {
-  const inputNode =
-    inputType === "number" ? <InputNumber /> : <Input />;
-
+  const inputNode = inputType === "number" ? <InputNumber /> : <Input />;
   return (
-    <td>
+    <td {...restProps}>
       {editing ? (
         <Form.Item
           name={dataIndex}
@@ -58,43 +162,200 @@ const EditableCell = ({
 
 const Courses = () => {
   const [form] = Form.useForm();
-  const [data, setData] = useState();
   const [editingKey, setEditingKey] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [courses, setCourses] = useState([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [refreshData, setRefreshData] = useState(false);
+  const [filterData, setFilterData] = useState([]);
+  const [expandedRows, setExpandedRows] = useState([]);
+  const [isSessionModalVisible, setIsSessionModalVisible] = useState(false);
+  const [isItemModalVisible, setIsItemModalVisible] = useState(false);
+  const [sessionForm] = Form.useForm();
 
-  const isEditing = (record) => record.key === editingKey;
+  const [api, contextHolder] = notification.useNotification();
+
+  const openNotification = (type, message, description) => {
+    api[type]({
+      message,
+      description,
+    });
+  };
+
+  const showSessionModal = () => {
+    setIsSessionModalVisible(true);
+  };
+
+  const showItemModal = () => {
+    setIsItemModalVisible(true);
+  };
+
+  const handleSessionCreate = async (values, id) => {
+    const sessionData = {
+      name: values.name,
+      video: values.video,
+      item_id: id,
+    };
+
+    console.log("Received values:", sessionData);
+
+    try {
+      const { result, success } = await addSession(sessionData);
+      if (success) {
+        setRefreshData(!refreshData);
+        sessionForm.resetFields();
+        setIsSessionModalVisible(false);
+        openNotification(
+          "success",
+          "Session Added",
+          "The session has been successfully added."
+        );
+      } else {
+        openNotification(
+          "error",
+          "Add Session Failed",
+          "Unable to add the session"
+        );
+      }
+    } catch (errInfo) {
+      openNotification("error", "Error", errInfo.message);
+    }
+
+    setIsSessionModalVisible(false);
+  };
+
+  const handleItemCreate = async (values, id) => {
+    const itemData = {
+      name: values.name,
+      course_id: id,
+    };
+
+    console.log("Received values:", itemData);
+
+    try {
+      const { result, success } = await addItem(itemData);
+      if (success) {
+        setRefreshData(!refreshData);
+        sessionForm.resetFields();
+        setIsSessionModalVisible(false);
+        openNotification(
+          "success",
+          "Item Added",
+          "The item has been successfully added."
+        );
+      } else {
+        openNotification("error", "Add Item Failed", "Unable to add the item");
+      }
+    } catch (errInfo) {
+      openNotification("error", "Error", errInfo.message);
+    }
+
+    setIsItemModalVisible(false);
+  };
+
+  // Function to handle session form cancellation
+  const handleSessionCancel = () => {
+    form.resetFields();
+    setIsSessionModalVisible(false);
+  };
+
+  const handleItemCancel = () => {
+    form.resetFields();
+    setIsItemModalVisible(false);
+  };
+
+  const isEditing = (record) => record.id === editingKey;
 
   const edit = (record) => {
     form.setFieldsValue({
-      ...record,
+      // Set form values for editing
     });
-    setEditingKey(record.key);
+    setEditingKey(record.id);
   };
+
+  const clearForm = () => {
+    form.resetFields();
+  };
+
+  const handleExpand = (expanded, record) => {
+    if (!expanded) {
+      const newExpandedRows = expandedRows.filter((key) => key !== record.id);
+      setExpandedRows(newExpandedRows);
+    } else {
+      clearForm();
+      setExpandedRows([...expandedRows, record.id]);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const { success, result } = await getCourses();
+      if (success) {
+        setCourses(result);
+        setFilterData(result);
+      }
+    } catch (errInfo) {
+      openNotification("error", "Error", errInfo.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchCourses();
+  }, [refreshData]);
 
   const cancel = () => {
     setEditingKey("");
   };
 
-  const save = async (key) => {
+  const save = async (id) => {
     try {
       const row = await form.validateFields();
-      const newData = [...data];
-      const index = newData.findIndex((item) => key === item.key);
-      if (index > -1) {
-        const item = newData[index];
-        newData.splice(index, 1, {
-          ...item,
-          ...row,
-        });
-        setData(newData);
-        setEditingKey("");
+
+      const requirements =
+        row.requirements && typeof row.requirements === "string"
+          ? row.requirements.split(", ").filter(Boolean)
+          : [];
+      const skills =
+        row.skills && typeof row.skills === "string"
+          ? row.skills.split(", ").filter(Boolean)
+          : [];
+      const lessons =
+        row.lessons && typeof row.lessons === "string"
+          ? row.lessons.split(", ").filter(Boolean)
+          : [];
+
+      const updatedCourse = {
+        title: row.title,
+        sub_title: row.sub_title,
+        description: row.description,
+        language: row.language,
+        requirements: requirements,
+        lessons: lessons,
+        skills: skills,
+        image: row.image,
+        isActive: row.isActive,
+      };
+
+      const { success } = await updateCourse(updatedCourse, id);
+
+      if (success) {
+        setRefreshData(!refreshData);
+        cancel();
+        openNotification(
+          "success",
+          "Course Updated",
+          "The course has been successfully updated."
+        );
       } else {
-        newData.push(row);
-        setData(newData);
-        setEditingKey("");
+        openNotification(
+          "error",
+          "Update Failed",
+          "Unable to update the course"
+        );
       }
     } catch (errInfo) {
       console.log("Validate Failed:", errInfo);
+      openNotification("error", "Error", errInfo.message);
     }
   };
 
@@ -104,145 +365,115 @@ const Courses = () => {
 
   const handleCancel = () => {
     setIsModalVisible(false);
+    form.resetFields();
+  };
+
+  const errorFlattener = (error) => {
+    let err = "";
+    error.errorFields.forEach((element) => {
+      err += `${element.errors}\n`;
+    });
+    return err;
   };
 
   const handleOk = () => {
     form
       .validateFields()
-      .then((values) => {
-        const newRow = {
-          key: (data.length + 1).toString(),
-          ...values,
+      .then(async (values) => {
+        console.log(values);
+        const requirements =
+          values.requirements && typeof values.requirements === "string"
+            ? values.requirements.split(", ").filter(Boolean)
+            : [];
+        const skills =
+          values.skills && typeof values.skills === "string"
+            ? values.skills.split(", ").filter(Boolean)
+            : [];
+        const lessons =
+          values.lessons && typeof values.lessons === "string"
+            ? values.lessons.split(", ").filter(Boolean)
+            : [];
+
+        const courseData = {
+          title: values.title,
+          sub_title: values.sub_title,
+          description: values.description,
+          language: values.language,
+          requirements: requirements,
+          lessons: lessons,
+          skills: skills,
+          image: values.image,
+          isActive: values.isActive,
         };
-        setData([...data, newRow]);
-        form.resetFields();
-        setIsModalVisible(false);
+
+        try {
+          const { result, success } = await addCourse(courseData);
+
+          if (success) {
+            setRefreshData(!refreshData);
+            form.resetFields();
+            setIsModalVisible(false);
+            openNotification(
+              "success",
+              "Course Added",
+              "The course has been successfully added."
+            );
+          } else {
+            openNotification(
+              "error",
+              "Add Course Failed",
+              "Unable to add the course"
+            );
+          }
+        } catch (errInfo) {
+          openNotification("error", "Error", errInfo.request.error);
+        }
       })
       .catch((errorInfo) => {
         console.log("Validate Failed:", errorInfo);
+        openNotification("error", "Error", errorInfo.message);
       });
   };
 
-  const handleDelete = (key) => {
-    const newData = data.filter((item) => item.key !== key);
-    setData(newData);
+  const handleDelete = async (id) => {
+    try {
+      const { success } = await removeCourse(id);
+      if (success) {
+        setRefreshData(!refreshData);
+        openNotification(
+          "success",
+          "Course Deleted",
+          "The course has been successfully deleted."
+        );
+      } else {
+        openNotification(
+          "error",
+          "Delete Failed",
+          "Unable to delete the course"
+        );
+      }
+    } catch (errInfo) {
+      openNotification("error", "Error", errInfo.message);
+    }
   };
 
-  const columns = [
-    {
-      title: "Title",
-      dataIndex: "title",
-      width: "15%",
-      render: (text, record) =>
-        renderCell(text, record, "title", form),
-    },
-    {
-      title: "Sub Title",
-      dataIndex: "sub_title",
-      width: "15%",
-      render: (text, record) =>
-        renderCell(text, record, "sub_title", form),
-    },
-    {
-      title: "Description",
-      dataIndex: "description",
-      width: "20%",
-      render: (text, record) =>
-        renderCell(text, record, "description", form),
-    },
-    {
-      title: "Language",
-      dataIndex: "language",
-      width: "10%",
-      render: (text, record) =>
-        renderCell(text, record, "language", form),
-    },
-    {
-      title: "Requirements",
-      dataIndex: "requirements",
-      width: "10%",
-      render: (text, record) =>
-        renderCell(text, record, "requirements", form),
-    },
-    {
-      title: "Lessons",
-      dataIndex: "lessons",
-      width: "10%",
-      render: (text, record) =>
-        renderCell(text, record, "lessons", form),
-    },
-    {
-      title: "Skills",
-      dataIndex: "skills",
-      width: "10%",
-      render: (text, record) =>
-        renderCell(text, record, "skills", form),
-    },
-    {
-      title: "Image",
-      dataIndex: "image",
-      width: "10%",
-      render: (text, record) =>
-        renderCell(text, record, "image", form),
-    },
-    {
-      title: "Is Active",
-      dataIndex: "isActive",
-      width: "10%",
-      render: (text, record) =>
-        renderCell(text, record, "isActive", form),
-    },
-    {
-      title: "Action",
-      dataIndex: "operation",
-      render: (_, record) => {
-        const editable = isEditing(record);
-        return editable ? (
-          <Space>
-            <Typography.Link onClick={() => save(record.key)}>
-              <CheckOutlined />
-            </Typography.Link>
-            <Popconfirm
-              title="Sure to cancel?"
-              onConfirm={cancel}
-            >
-              <a>
-                <CloseOutlined />
-              </a>
-            </Popconfirm>
-          </Space>
-        ) : (
-          <Space>
-            <Typography.Link
-              disabled={editingKey !== ""}
-              onClick={() => edit(record)}
-            >
-              <EditOutlined />
-            </Typography.Link>
-            <Popconfirm
-              title="Sure to delete this course?"
-              onConfirm={() => handleDelete(record.key)}
-            >
-              <a>
-                <DeleteOutlined />
-              </a>
-            </Popconfirm>
-          </Space>
-        );
-      },
-    },
-  ];
+  const onSelectChange = (selectedKeys) => {
+    setSelectedRowKeys(selectedKeys);
+  };
 
-  const renderCell = (text, record, dataIndex, form) => {
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: onSelectChange,
+  };
+
+  const renderCell = (text, record, dataIndex) => {
     const editing = isEditing(record);
     return (
       <td>
         {editing ? (
           <Form.Item
             name={dataIndex}
-            style={{
-              margin: 0,
-            }}
+            style={{ margin: 0 }}
             rules={[
               {
                 required: true,
@@ -259,18 +490,198 @@ const Courses = () => {
     );
   };
 
+  const onChange = (pagination, filters, sorter, extra) => {
+    console.log("params", pagination, filters, sorter, extra);
+  };
+
+  const columns = [
+    {
+      title: "Title",
+      dataIndex: "title",
+      width: "15%",
+      render: (text, record) => renderCell(text, record, "title"),
+    },
+    {
+      title: "Sub Title",
+      dataIndex: "sub_title",
+      width: "15%",
+      render: (text, record) => renderCell(text, record, "title"),
+    },
+    // Define other columns here
+    {
+      title: "Status",
+      dataIndex: "isActive",
+      key: "status",
+      render: (status) => {
+        let color = "";
+        let stat = "";
+        switch (status) {
+          case true:
+            color = "green";
+            stat = "Active";
+            break;
+          case false:
+            color = "red";
+            stat = "Inactive";
+            break;
+          default:
+            color = "default";
+            stat = "Default";
+        }
+
+        return (
+          <Tag color={color} key={status}>
+            {stat}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "Action",
+      dataIndex: "operation",
+      render: (_, record) => {
+        const editable = isEditing(record);
+        return (
+          <Space>
+            {editable ? (
+              <>
+                <Typography.Link onClick={() => save(record.id)}>
+                  <CheckOutlined />
+                </Typography.Link>
+                <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
+                  <a>
+                    <CloseOutlined />
+                  </a>
+                </Popconfirm>
+              </>
+            ) : (
+              <>
+                <Typography.Link
+                  disabled={editingKey !== ""}
+                  onClick={() => edit(record)}
+                >
+                  <EditOutlined />
+                </Typography.Link>
+                <Popconfirm
+                  title="Sure to delete?"
+                  onConfirm={() => handleDelete(record.id)}
+                >
+                  <a>
+                    <DeleteOutlined />
+                  </a>
+                </Popconfirm>
+              </>
+            )}
+          </Space>
+        );
+      },
+    },
+  ];
+
+  const expandedRowRender = (record) => {
+    const isThisRowExpanded = expandedRows.includes(record.id);
+
+    return isThisRowExpanded ? (
+      <Form form={form} initialValues={{ ...record }}>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label="Requirements" name="requirements">
+              <Input.TextArea />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="Skills" name="skills">
+              <Input.TextArea />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label="Image" name="image">
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="Description" name="description">
+              <Input.TextArea />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        {record.items.map((e) => (
+          <div key={e.id} style={{ marginBottom: "20px" }}>
+            <span style={{ fontSize: "20px", fontWeight: "bold" }}>
+              {e.name}
+            </span>
+            <Button
+              // type="primary"
+              onClick={showSessionModal}
+              style={{ float: "right" }}
+            >
+              <PlusOutlined /> Add Session
+            </Button>
+            <Table
+              dataSource={e.sessions}
+              columns={sessionColumns}
+              pagination={false}
+            />
+            <SessionForm
+              visible={isSessionModalVisible}
+              onCreate={handleSessionCreate}
+              onCancel={handleSessionCancel}
+              id={e.id}
+            />
+            <ItemForm
+              visible={isItemModalVisible}
+              onCreate={handleItemCreate}
+              onCancel={handleItemCancel}
+              id={record.id}
+            />
+          </div>
+        ))}
+        <Button
+          // type="primary"
+          onClick={showItemModal}
+          style={{ marginTop: "10px" }}
+        >
+          <PlusOutlined /> Add Item
+        </Button>
+      </Form>
+    ) : null;
+  };
+
+  const sessionColumns = [
+    {
+      title: "Session Name",
+      dataIndex: "name",
+    },
+    {
+      title: "Video",
+      dataIndex: "video",
+    },
+    {
+      // Add more columns as needed for session-specific data
+    },
+  ];
+
+  const onSearch = (value) => {
+    // Your search logic here
+  };
+
   return (
     <div className="course-wrapper">
+      {contextHolder}
       <div className="course-btn-wrapper">
-        <Button
-          size="middle"
-          className="course-btn"
-          onClick={showModal}
-        >
-          <PlusOutlined />
-          Add Courses
+        <Button type="primary" onClick={showModal}>
+          <PlusOutlined /> Add Course
         </Button>
       </div>
+
+      <Input.Search
+        placeholder="Search by title"
+        onSearch={onSearch}
+        style={{ width: 200, marginBottom: 16 }}
+      />
 
       <Form form={form} component={false}>
         <Table
@@ -280,90 +691,81 @@ const Courses = () => {
             },
           }}
           bordered
-          dataSource={data}
+          dataSource={filterData}
           columns={columns}
           rowClassName="editable-row"
+          onChange={onChange}
+          expandable={{
+            rowExpandable: (record) => record.title !== "Not Expandable",
+            expandedRowRender,
+            onExpand: handleExpand,
+          }}
+          rowSelection={rowSelection}
         />
-      </Form>
 
-      {/* Add Course Modal */}
-      <Modal
-        title="Add Course"
-        visible={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        form={form}
-      >
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Title"
-              name="title"
-              rules={[
-                { required: true, message: "Please input the course title!" },
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="Sub Title"
-              name="sub_title"
-              rules={[
-                { required: true, message: "Please input the course subtitle!" },
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Description"
-              name="description"
-              rules={[
-                {
-                  required: true,
-                  message: "Please input the course description!",
-                },
-              ]}
-            >
-              <Input.TextArea />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="Language"
-              name="language"
-              rules={[
-                {
-                  required: true,
-                  message: "Please input the course language!",
-                },
-              ]}
-            >
-              <Input />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Form.Item label="Requirements" name="requirements">
-          <Input.TextArea />
-        </Form.Item>
-        <Form.Item label="Lessons" name="lessons">
-          <Input.TextArea />
-        </Form.Item>
-        <Form.Item label="Skills" name="skills">
-          <Input.TextArea />
-        </Form.Item>
-        <Form.Item label="Image" name="image">
-          <Input />
-        </Form.Item>
-        <Form.Item label="Is Active" name="isActive">
-          <Input />
-        </Form.Item>
-      </Modal>
+        <Modal
+          title="Add Course"
+          open={isModalVisible}
+          onOk={handleOk}
+          onCancel={handleCancel}
+          form={form}
+        >
+          <Form.Item
+            label="Title"
+            name="title"
+            rules={[
+              {
+                required: true,
+                message: "Please input the title!",
+              },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Sub Title"
+            name="sub_title"
+            rules={[
+              {
+                required: true,
+                message: "Please input the sub title!",
+              },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Description"
+            name="description"
+            rules={[
+              {
+                required: true,
+                message: "Please input the description!",
+              },
+            ]}
+          >
+            <Input.TextArea />
+          </Form.Item>
+          <Form.Item label="Language" name="language">
+            <Input />
+          </Form.Item>
+          <Form.Item label="Requirements" name="requirements">
+            <Input.TextArea />
+          </Form.Item>
+          <Form.Item label="Lessons" name="lessons">
+            <Input.TextArea />
+          </Form.Item>
+          <Form.Item label="Skills" name="skills">
+            <Input.TextArea />
+          </Form.Item>
+          <Form.Item label="Image" name="image">
+            <Input />
+          </Form.Item>
+          <Form.Item label="Status" name="isActive" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+        </Modal>
+      </Form>
     </div>
   );
 };
