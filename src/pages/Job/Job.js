@@ -199,7 +199,7 @@ const Jobs = () => {
           skills: skills,
         };
         try {
-          const { result ,success } = await addJob(jobData);
+          const { result, success } = await addJob(jobData);
           console.log(result);
           if (success) {
             setRefreshData(!refreshData);
@@ -399,15 +399,6 @@ const Jobs = () => {
           </Col>
         </Row>
 
-        {/* Add a section for viewing applicants */}
-        <h3>Applicants for {record.title}</h3>
-        {/* You can display a list of applicants here */}
-        {/* For example: */}
-        <ul>
-          <li>Applicant 1</li>
-          <li>Applicant 2</li>
-          {/* ... other applicants */}
-        </ul>
       </Form>
     ) : null;
   };

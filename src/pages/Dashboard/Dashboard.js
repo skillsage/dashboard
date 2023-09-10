@@ -8,21 +8,32 @@ import {
   LogoutOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Layout, Menu, Button, theme, Breadcrumb, Typography } from "antd";
+import { Layout, Menu, Button, theme, Breadcrumb, Typography, notification } from "antd";
 import { Courses, Jobs } from "../index";
 import { useNavigate } from "react-router-dom";
 import Application from "../Applications/Applications";
+import { logout } from "../../services/auth";
 const { Header, Sider, Content } = Layout;
 
 const Dashboard = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState("1");
+  const [api, contextHolder] = notification.useNotification();
+
+  const openNotification = (type, message, description) => {
+    api[type]({
+      message,
+      description,
+    });
+  };
+
   const navigate = useNavigate();
   const {
     token: { colorBgContainer },
   } = theme.useToken();
   return (
     <div style={{ margin: 0 }}>
+      {contextHolder}
       <Layout
         style={{
           minHeight: "100vh",
@@ -89,7 +100,21 @@ const Dashboard = () => {
             <Button
               type="text"
               icon={<LogoutOutlined />}
-              onClick={() => navigate("/")}
+              onClick={async () => {
+                try {
+                  const resp = await logout();
+                  if(resp){
+                    navigate("/");
+                  openNotification('success', 'LoggedOut')
+                  }else{
+                    openNotification('error', 'something went wrong')  
+                  }
+                  
+                } catch (err) {
+                  openNotification('error', 'Failed', err.message)
+                }
+                
+              }}
               style={{
                 fontSize: "16px",
                 width: 64,
@@ -126,7 +151,7 @@ const Dashboard = () => {
             }}
           >
             {selectedMenuItem === "1" && <Jobs />}
-            {selectedMenuItem === "2" && <Application/>}
+            {selectedMenuItem === "2" && <Application />}
             {selectedMenuItem === "3" && <Courses />}
           </Content>
         </Layout>

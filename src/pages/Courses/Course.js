@@ -94,7 +94,7 @@ const ItemForm = ({ visible, onCreate, onCancel, id }) => {
   return (
     <Modal
       open={visible}
-      title="Add Session"
+      title="Add Item"
       okText="Add"
       cancelText="Cancel"
       onCancel={onCancel}
@@ -113,11 +113,11 @@ const ItemForm = ({ visible, onCreate, onCancel, id }) => {
       <Form form={form} layout="vertical">
         <Form.Item
           name="name"
-          label="Session Name"
+          label="Item Name"
           rules={[
             {
               required: true,
-              message: "Please enter the session name",
+              message: "Please enter the item name",
             },
           ]}
         >
@@ -505,7 +505,13 @@ const Courses = () => {
       title: "Sub Title",
       dataIndex: "sub_title",
       width: "15%",
-      render: (text, record) => renderCell(text, record, "title"),
+      render: (text, record) => renderCell(text, record, "sub_title"),
+    },
+    {
+      title: "Language",
+      dataIndex: "language",
+      width: "15%",
+      render: (text, record) => renderCell(text, record, "language"),
     },
     // Define other columns here
     {
@@ -631,14 +637,14 @@ const Courses = () => {
               onCancel={handleSessionCancel}
               id={e.id}
             />
-            <ItemForm
-              visible={isItemModalVisible}
-              onCreate={handleItemCreate}
-              onCancel={handleItemCancel}
-              id={record.id}
-            />
           </div>
         ))}
+        <ItemForm
+          visible={isItemModalVisible}
+          onCreate={handleItemCreate}
+          onCancel={handleItemCancel}
+          id={record.id}
+        />
         <Button
           // type="primary"
           onClick={showItemModal}

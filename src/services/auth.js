@@ -5,6 +5,14 @@ const login = async (formData) => {
   return resp.data;
 }
 
+const logout = async () => {
+  const {result, success} = await client.post(`/auth/logout?token=${localStorage.getItem('token')}`)
+  if(success){
+    localStorage.removeItem('token');
+    return true;
+  }
+}
+
 export {
-  login
+  login, logout,
 }
