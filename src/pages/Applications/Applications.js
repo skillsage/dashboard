@@ -13,7 +13,7 @@ import {
 } from "../../services/applications";
 
 const Application = () => {
-  const [applicants, setApplicants] = useState([]); 
+  const [applicants, setApplicants] = useState([]);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [refreshData, setRefreshData] = useState(false);
@@ -27,10 +27,14 @@ const Application = () => {
   };
 
   const fetchApplicants = async () => {
-    const { result, success } = await getApplicants();
-    console.log(success);
-    if (success) {
-      setApplicants([...result]);
+    try {
+      const { result, success } = await getApplicants();
+      console.log(success);
+      if (success) {
+        setApplicants([...result]);
+      }
+    } catch (err) {
+      openNotification("error", "Network Error", err.message);
     }
     console.log(applicants);
   };
@@ -43,9 +47,10 @@ const Application = () => {
     const link = document.createElement("a");
     link.href = resumeUrl;
     link.target = "_blank";
-    link.download = "resume.pdf"; 
+    link.download = "resume.pdf";
     link.click();
   };
+  
   const columns = [
     { title: "Job Title", dataIndex: "job_title", key: "title" },
     {
@@ -77,14 +82,13 @@ const Application = () => {
           default:
             color = "default";
         }
-    
+
         return (
           <Tag color={color} key={status}>
             {status}
           </Tag>
         );
       },
-      
     },
     {
       title: "Skills",

@@ -8,17 +8,40 @@ import {
   LogoutOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Layout, Menu, Button, theme, Breadcrumb, Typography, notification } from "antd";
+import {
+  Layout,
+  Menu,
+  Button,
+  theme,
+  Breadcrumb,
+  Typography,
+  notification,
+} from "antd";
 import { Courses, Jobs } from "../index";
 import { useNavigate } from "react-router-dom";
 import Application from "../Applications/Applications";
 import { logout } from "../../services/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { clearUser } from "../../redux/Slice/slice";
+
 const { Header, Sider, Content } = Layout;
 
 const Dashboard = () => {
+  const user = useSelector(state => state.user).user;
+  let key = "";
+  switch(user.role){
+    case "CREATOR":
+      key="3";
+      break;
+    default:
+      key="1"
+      break;
+  }
+
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedMenuItem, setSelectedMenuItem] = useState("1");
+  const [selectedMenuItem, setSelectedMenuItem] = useState(key);
   const [api, contextHolder] = notification.useNotification();
+  const dispatch = useDispatch();
 
   const openNotification = (type, message, description) => {
     api[type]({
@@ -31,6 +54,8 @@ const Dashboard = () => {
   const {
     token: { colorBgContainer },
   } = theme.useToken();
+
+
   return (
     <div style={{ margin: 0 }}>
       {contextHolder}
@@ -47,34 +72,31 @@ const Dashboard = () => {
             mode="inline"
             selectedKeys={[selectedMenuItem]}
             onSelect={({ key }) => setSelectedMenuItem(key)}
-            items={[
-              {
-                key: "0",
-                label: "Dashboard",
-                disabled: true,
-              },
-              {
-                key: "1",
-                icon: <TeamOutlined />,
-                label: "Job",
-              },
-              {
-                key: "2",
-                icon: <UserOutlined />,
-                label: "Applicants",
-              },
-              {
-                key: "3",
-                icon: <VideoCameraOutlined />,
-                label: "Course",
-              },
-              {
-                key: "4",
-                icon: <BarChartOutlined />,
-                label: "Analytics",
-              },
-            ]}
-          />
+          >
+            <Menu.Item key="0" label="Dashboard" disabled>
+              Dashboard
+            </Menu.Item>
+            {(user.role === "EMPLOYER" || user.role === "ADMIN") && (
+              <Menu.Item key="1" icon={<TeamOutlined />} label="Job">
+                Job
+              </Menu.Item>
+            )}
+            {(user.role === "EMPLOYER" || user.role === "ADMIN") && (
+              <Menu.Item key="2" icon={<UserOutlined />} label="Applicants">
+                Applicants
+              </Menu.Item>
+            )}
+            {(user.role === "CREATOR" || user.role === "ADMIN") && (
+              <Menu.Item key="3" icon={<VideoCameraOutlined />} label="Course">
+                Course
+              </Menu.Item>
+            )}
+            {user.role === "ADMIN" && (
+              <Menu.Item key="4" icon={<BarChartOutlined />} label="Analytics">
+                Analytics
+              </Menu.Item>
+            )}
+          </Menu>
         </Sider>
         <Layout>
           {/* Header */}
@@ -95,25 +117,21 @@ const Dashboard = () => {
               }}
             />
             <span style={{ fontWeight: "bold", fontSize: "18px" }}>
-              Dashboard
+              {/* Dashboard */}
+              {user.name}
             </span>
             <Button
               type="text"
               icon={<LogoutOutlined />}
               onClick={async () => {
                 try {
-                  const resp = await logout();
-                  if(resp){
-                    navigate("/");
-                  openNotification('success', 'LoggedOut')
-                  }else{
-                    openNotification('error', 'something went wrong')  
-                  }
-                  
+                  await logout();
+                  dispatch(clearUser())
+                  navigate("/");
+                  openNotification("success", "logged out");
                 } catch (err) {
-                  openNotification('error', 'Failed', err.message)
+                  openNotification("error", "Failed", err.message);
                 }
-                
               }}
               style={{
                 fontSize: "16px",
@@ -130,6 +148,7 @@ const Dashboard = () => {
             }}
           >
             <Breadcrumb.Item>Dashboard</Breadcrumb.Item>
+            
             {selectedMenuItem === "1" ? (
               <Breadcrumb.Item>Job</Breadcrumb.Item>
             ) : selectedMenuItem === "3" ? (

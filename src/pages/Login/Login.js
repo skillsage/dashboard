@@ -1,14 +1,16 @@
-// Login.js
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Input, Button, Checkbox, Card, notification } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import "./Login.css";
 import { login } from "../../services/auth";
 import { useNavigate } from "react-router-dom";
 import Logo from "../../assets/images/logo.jpeg";
+import { useDispatch, useSelector } from "react-redux";
+import { setUser } from "../../redux/Slice/slice";
 
 const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [api, contextHolder] = notification.useNotification();
 
@@ -32,11 +34,11 @@ const Login = () => {
     console.log("Received values:", values);
     try {
       const { success, result } = await login(values);
-      console.log(result);
       if (success) {
-        localStorage.setItem("token", result.token);
+        dispatch(setUser(result));
         setIsLoading(false);
         openNotification("success", "Logged in", "Logged in Successfully!");
+        // onComplete();
         navigate("/dashboard");
       } else {
         setIsLoading(false);
