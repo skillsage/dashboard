@@ -35,11 +35,13 @@ const Login = () => {
     try {
       const { success, result } = await login(values);
       if (success) {
+        localStorage.setItem('token', result.token);
         dispatch(setUser(result));
         setIsLoading(false);
         openNotification("success", "Logged in", "Logged in Successfully!");
         // onComplete();
         navigate("/dashboard");
+        window.location.reload();
       } else {
         setIsLoading(false);
         openNotification("error", "login failed", "unable to login");

@@ -8,11 +8,14 @@ const App = () => {
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
-      <Route path="/dashboard" element={<ProtectedRoute
-        allowedRoles={["ADMIN", "CREATOR", "EMPLOYER"]}
-      >
-        <Dashboard />
-      </ProtectedRoute>} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "CREATOR", "EMPLOYER"]}>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };

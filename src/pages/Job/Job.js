@@ -64,7 +64,7 @@ const Jobs = () => {
   const [refreshData, setRefreshData] = useState(false);
   const [filterData, setFilterData] = useState([]);
   const [expandedRows, setExpandedRows] = useState([]);
-
+  const [loading, setLoading] = useState(true);
   const [api, contextHolder] = notification.useNotification();
 
   const openNotification = (type, message, description) => {
@@ -115,6 +115,9 @@ const Jobs = () => {
       }
     } catch (errInfo) {
       openNotification("error", "Error", errInfo.message);
+      setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -398,7 +401,6 @@ const Jobs = () => {
             </Form.Item>
           </Col>
         </Row>
-
       </Form>
     ) : null;
   };
@@ -462,6 +464,7 @@ const Jobs = () => {
             onExpand: handleExpand,
           }}
           rowSelection={rowSelection}
+          loading={loading}
         />
 
         <Modal

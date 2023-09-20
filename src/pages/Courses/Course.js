@@ -172,7 +172,7 @@ const Courses = () => {
   const [isSessionModalVisible, setIsSessionModalVisible] = useState(false);
   const [isItemModalVisible, setIsItemModalVisible] = useState(false);
   const [sessionForm] = Form.useForm();
-
+  const [loading, setLoading] = useState(true);
   const [api, contextHolder] = notification.useNotification();
 
   const openNotification = (type, message, description) => {
@@ -296,6 +296,9 @@ const Courses = () => {
       }
     } catch (errInfo) {
       openNotification("error", "Error", errInfo.message);
+      setLoading(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -508,7 +511,7 @@ const Courses = () => {
       render: (text, record) => renderCell(text, record, "sub_title"),
     },
     {
-      title: "Language",
+      title: "Languages",
       dataIndex: "language",
       width: "15%",
       render: (text, record) => renderCell(text, record, "language"),
@@ -518,7 +521,7 @@ const Courses = () => {
       title: "Status",
       dataIndex: "isActive",
       key: "status",
-      render: (status) => {
+      render: (status, record) => {
         let color = "";
         let stat = "";
         switch (status) {
@@ -537,7 +540,7 @@ const Courses = () => {
 
         return (
           <Tag color={color} key={status}>
-            {stat}
+            {renderCell(stat, record, "isActive")}
           </Tag>
         );
       },
@@ -707,6 +710,7 @@ const Courses = () => {
             onExpand: handleExpand,
           }}
           rowSelection={rowSelection}
+          loading={loading}
         />
 
         <Modal

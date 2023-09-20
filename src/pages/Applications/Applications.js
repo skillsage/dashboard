@@ -18,7 +18,8 @@ const Application = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [refreshData, setRefreshData] = useState(false);
   const [api, contextHolder] = notification.useNotification();
-
+  const [loading, setLoading] = useState(true);
+    
   const openNotification = (type, message, description) => {
     api[type]({
       message,
@@ -35,6 +36,9 @@ const Application = () => {
       }
     } catch (err) {
       openNotification("error", "Network Error", err.message);
+      setLoading(false)
+    }finally{
+      setLoading(false)
     }
     console.log(applicants);
   };
@@ -50,9 +54,9 @@ const Application = () => {
     link.download = "resume.pdf";
     link.click();
   };
-  
+
   const columns = [
-    { title: "Job Title", dataIndex: "job_title", key: "title" },
+    { title: "Job Title", dataIndex: "jobs", key: "title" },
     {
       title: "Name",
       dataIndex: "name",
@@ -99,20 +103,21 @@ const Application = () => {
       title: "Resume",
       key: "resume",
       render: (_, applicant) =>
-        applicant.resume.length > 0 ? (
+        applicant.resume.map((e) => (
           <Button
-            icon={<FilePdfOutlined />} // Add the DownloadOutlined icon
-            onClick={() => handleDownloadResume(applicant.resume)}
+            style={{ marginRight: "10px" }}
+            icon={<FilePdfOutlined />}
+            onClick={() => handleDownloadResume(e)}
           >
-            Download Resume
+            resume_{applicant.resume.indexOf(e) + 1}
           </Button>
-        ) : null,
+        )),
     },
     {
       title: "Action",
       key: "action",
       render: (_, applicant) => (
-        <Space size="middle">
+        <Space size="small">
           <Button
             icon={<EyeOutlined />}
             onClick={() => {
@@ -188,7 +193,7 @@ const Application = () => {
   return (
     <div>
       {contextHolder}
-      <Table columns={columns} dataSource={applicants} />
+      <Table columns={columns} dataSource={applicants} loading={loading}/>
 
       {/* Modal for viewing applicant details */}
       <Modal
@@ -199,9 +204,33 @@ const Application = () => {
       >
         {selectedApplicant && (
           <div>
-            <p>Name: {selectedApplicant.name}</p>
+            {/* <p>Name: {selectedApplicant.name}</p>
             <p>Email: {selectedApplicant.email}</p>
-            <p>Skills: {selectedApplicant.skills}</p>
+            <p>Skills: {selectedApplicant.skills}</p> */}
+            <h2>Experiences</h2>
+            {selectedApplicant.experiences.map((e) => {
+              return <div>
+                {console.log(typeof(e))}
+                <p>Title: {e.job_title}</p>
+                <p>Company: {e.company_name}</p>
+                <p>Remote Status: {e.is_remote}</p>
+                <p>Start Date: {e.start_date}</p>
+                <p>End Date: {e.end_date}</p>
+                <p>Completed Status: {e.has_completed}</p>
+                <p>Tasks: {e.tasks}</p>
+              </div>;
+            })}
+            <h2>Educations</h2>
+            {selectedApplicant.education.map((e) => {
+              return <div>
+                <p>Institution: {e.institution}</p>
+                <p>Program: {e.program}</p>
+                <p>Start Date: {e.start_date}</p>
+                <p>End Date: {e.end_date}</p>
+                <p>Completed Status: {e.has_completed}</p>
+              </div>;
+            })}
+
             {/* Include other applicant details here */}
           </div>
         )}
