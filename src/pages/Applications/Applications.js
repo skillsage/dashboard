@@ -56,7 +56,7 @@ const Application = () => {
   };
 
   const columns = [
-    { title: "Job Title", dataIndex: "jobs", key: "title" },
+    { title: "Job Title", dataIndex: "job_title", key: "title" },
     {
       title: "Name",
       dataIndex: "name",
@@ -103,13 +103,13 @@ const Application = () => {
       title: "Resume",
       key: "resume",
       render: (_, applicant) =>
-        applicant.resume.map((e) => (
+        applicant.resume_links.map((e) => (
           <Button
             style={{ marginRight: "10px" }}
             icon={<FilePdfOutlined />}
             onClick={() => handleDownloadResume(e)}
           >
-            resume_{applicant.resume.indexOf(e) + 1}
+            resume_{applicant.resume_links.indexOf(e) + 1}
           </Button>
         )),
     },

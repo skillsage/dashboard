@@ -35,13 +35,17 @@ const Login = () => {
     try {
       const { success, result } = await login(values);
       if (success) {
-        localStorage.setItem('token', result.token);
+        localStorage.setItem("token", result.token);
         dispatch(setUser(result));
+
         setIsLoading(false);
         openNotification("success", "Logged in", "Logged in Successfully!");
         // onComplete();
-        navigate("/dashboard");
-        window.location.reload();
+        // navigate("/dashboard");
+        window.location.href="/dashboard";
+        // setTimeout(() => {
+          
+        // }, 1);
       } else {
         setIsLoading(false);
         openNotification("error", "login failed", "unable to login");

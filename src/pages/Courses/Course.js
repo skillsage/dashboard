@@ -29,7 +29,9 @@ import {
   removeCourse,
   updateCourse,
   addSession,
-  addItem, // Add your service function for adding sessions here
+  addItem,
+  removeItem,
+  removeSession, // Add your service function for adding sessions here
 } from "../../services/course";
 
 const SessionForm = ({ visible, onCreate, onCancel, id }) => {
@@ -313,31 +315,39 @@ const Courses = () => {
   const save = async (id) => {
     try {
       const row = await form.validateFields();
-
+      console.log(row.requirements);
+      console.log(row.skills);
+      console.log(row.lessons);
       const requirements =
-        row.requirements && typeof row.requirements === "string"
-          ? row.requirements.split(", ").filter(Boolean)
-          : [];
-      const skills =
-        row.skills && typeof row.skills === "string"
-          ? row.skills.split(", ").filter(Boolean)
-          : [];
-      const lessons =
-        row.lessons && typeof row.lessons === "string"
-          ? row.lessons.split(", ").filter(Boolean)
-          : [];
+      row.requirements && typeof row.requirements === 'string'
+        ? row.requirements.split(',').map((item) => item.trim())
+        : Array.isArray(row.requirements)
+        ? row.requirements
+        : [];
+    const skills =
+      row.skills && typeof row.skills === 'string'
+        ? row.skills.split(',').map((item) => item.trim())
+        : Array.isArray(row.skills)
+        ? row.skills
+        : [];
+    const lessons =
+      row.lessons && typeof row.lessons === 'string'
+        ? row.lessons.split(',').map((item) => item.trim())
+        : Array.isArray(row.lessons)
+        ? row.lessons
+        : [];
 
-      const updatedCourse = {
-        title: row.title,
-        sub_title: row.sub_title,
-        description: row.description,
-        language: row.language,
-        requirements: requirements,
-        lessons: lessons,
-        skills: skills,
-        image: row.image,
-        isActive: row.isActive,
-      };
+    const updatedCourse = {
+      title: row.title,
+      sub_title: row.sub_title,
+      description: row.description,
+      language: row.language,
+      requirements: requirements,
+      lessons: lessons,
+      skills: skills,
+      image: row.image,
+      isActive: row.isActive,
+    };
 
       const { success } = await updateCourse(updatedCourse, id);
 
@@ -453,6 +463,53 @@ const Courses = () => {
           "error",
           "Delete Failed",
           "Unable to delete the course"
+        );
+      }
+    } catch (errInfo) {
+      openNotification("error", "Error", errInfo.message);
+    }
+  };
+
+  // course item
+  const handleDeleteItem = async (id) => {
+    try {
+      const { success } = await removeItem(id);
+      if (success) {
+        setRefreshData(!refreshData);
+
+        openNotification(
+          "success",
+          "Course Item Deleted",
+          "The course item has been successfully deleted."
+        );
+      } else {
+        openNotification(
+          "error",
+          "Delete Failed",
+          "Unable to delete the course item"
+        );
+      }
+    } catch (errInfo) {
+      openNotification("error", "Error", errInfo.message);
+    }
+  };
+
+  // delete session
+  const handleDeleteSession = async (id) => {
+    try {
+      const { success } = await removeSession(id);
+      if (success) {
+        setRefreshData(!refreshData);
+        openNotification(
+          "success",
+          "Session Deleted",
+          "The session has been successfully deleted."
+        );
+      } else {
+        openNotification(
+          "error",
+          "Delete Failed",
+          "Unable to delete the session"
         );
       }
     } catch (errInfo) {
@@ -587,6 +644,24 @@ const Courses = () => {
     },
   ];
 
+  const deleteItem = async (id) => {
+    try {
+      const { success } = await removeItem(id);
+      if (success) {
+        openNotification(
+          "success",
+          "Item Deleted",
+          "Successfully removed Course Item"
+        );
+        setRefreshData(!refreshData);
+      } else {
+        openNotification("error", "Failed", "Deletion Failed");
+      }
+    } catch (err) {
+      openNotification("error", "Network Error", err.message);
+    }
+  };
+
   const expandedRowRender = (record) => {
     const isThisRowExpanded = expandedRows.includes(record.id);
 
@@ -615,6 +690,11 @@ const Courses = () => {
               <Input.TextArea />
             </Form.Item>
           </Col>
+          <Col span={12}>
+            <Form.Item label="Lessons" name="lessons">
+              <Input.TextArea />
+            </Form.Item>
+          </Col>
         </Row>
 
         {record.items.map((e) => (
@@ -622,6 +702,13 @@ const Courses = () => {
             <span style={{ fontSize: "20px", fontWeight: "bold" }}>
               {e.name}
             </span>
+            <Button
+              // type="primary"
+              onClick={() => deleteItem(e.id)}
+              style={{ float: "right" }}
+            >
+              <DeleteOutlined /> Delete Item
+            </Button>
             <Button
               // type="primary"
               onClick={showSessionModal}
@@ -669,7 +756,23 @@ const Courses = () => {
       dataIndex: "video",
     },
     {
-      // Add more columns as needed for session-specific data
+      title: "Action",
+      render: (_, session) => {
+        return (
+          <Space>
+            {/* Edit Course Item */}
+            <a>Edit</a>
+
+            {/* Delete Course Item */}
+            <Popconfirm
+              title="Are you sure you want to delete this course item?"
+              onConfirm={() => handleDeleteSession(session.id)}
+            >
+              <a>Delete</a>
+            </Popconfirm>
+          </Space>
+        );
+      },
     },
   ];
 

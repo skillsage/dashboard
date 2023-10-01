@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -37,6 +37,10 @@ const Dashboard = () => {
       key="1"
       break;
   }
+
+  // useEffect(()=>{
+  // // window.location.reload();
+  // },[])
 
   const [collapsed, setCollapsed] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState(key);
